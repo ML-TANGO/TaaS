@@ -239,6 +239,21 @@ status:
   loadBalancer: {}
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+spec:
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+  selector:
+    io.kompose.service: postgresql
+status:
+  loadBalancer: {}
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -277,8 +292,10 @@ spec:
           env:
             - name: NVIDIA_VISIBLE_DEVICES
               value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,video,graphics
           image: autonn-resnet
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: autonn-resnet
           ports:
             - containerPort: 8092
@@ -369,8 +386,10 @@ spec:
           env:
             - name: NVIDIA_VISIBLE_DEVICES
               value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,video,graphics
           image: autonn-yoloe
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: autonn-yoloe
           ports:
             - containerPort: 8090
@@ -491,7 +510,7 @@ spec:
             - name: NVIDIA_VISIBLE_DEVICES
               value: all
           image: bms
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: bms
           ports:
             - containerPort: 8081
@@ -569,7 +588,7 @@ spec:
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: /source/cloud_manager/service-account-file.json
           image: cloud-deploy
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: cloud-deploy
           ports:
             - containerPort: 7007
@@ -669,7 +688,7 @@ spec:
             - -c
             - cd /app && python3 code_gen.py
           image: code-gen
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: code-gen
           ports:
             - containerPort: 8888
@@ -745,7 +764,7 @@ spec:
             - name: HOME
               value: /home/root
           image: kube-deploy
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: tango-k8s
           ports:
             - containerPort: 8901
@@ -857,8 +876,8 @@ spec:
         io.kompose.service: labelling
     spec:
       containers:
-        - image: labelling
-          imagePullPolicy: IfNotPresent
+        - image: tango_labelling:latest
+          imagePullPolicy: Never
           name: labelling
           ports:
             - containerPort: 80
@@ -954,7 +973,7 @@ spec:
             - -c
             - cd /app && python3 ondevice_deploy.py
           image: ondevice-deploy
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: ondevice-deploy
           ports:
             - containerPort: 8891
@@ -1030,7 +1049,7 @@ spec:
             - name: POSTGRES_USER
               value: postgres
           image: postgres:15.4
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: postgresql
           resources: {}
           volumeMounts:
@@ -1107,7 +1126,7 @@ spec:
             - name: POSTGRES_USER
               value: postgres
           image: project-manager
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: project-manager
           ports:
             - containerPort: 8085
@@ -1197,7 +1216,7 @@ spec:
     spec:
       containers:
         - image: registry
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: registry
           ports:
             - containerPort: 5000
@@ -1270,7 +1289,7 @@ spec:
                      python manage.py migrate &&
                      python manage.py runserver react 0.0.0.0:8091
           image: viz2code
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           name: viz2code
           ports:
             - containerPort: 8091
