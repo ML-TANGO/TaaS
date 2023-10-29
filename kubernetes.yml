@@ -876,7 +876,7 @@ spec:
         io.kompose.service: labelling
     spec:
       containers:
-        - image: tango_labelling:latest
+        - image: labelling
           imagePullPolicy: Never
           name: labelling
           ports:
