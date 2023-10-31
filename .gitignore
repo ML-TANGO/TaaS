@@ -1,0 +1,17 @@
+# PyCharm
+.idea
+
+# Pyenv virtualenv
+.python-version
+
+# SQLite DB
+*.db
+
+# Testing
+shared
+
+# GCP
+service-account-file.json
+
+# Local
+.DS_Store
