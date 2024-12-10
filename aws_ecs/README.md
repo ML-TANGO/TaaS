@@ -43,9 +43,12 @@ $ sudo docker compose up -d --build
 
 
 ## AWS ECR 도커 컨테이너 등록
-Docker compose 로 빌드된 컨테이너를, AWS ECR 컨테이너에 등록합니다 .
+Docker compose 로 빌드된 컨테이너를, AWS ECR 컨테이너에 등록합니다.
 
-다음에는 AWS ECR에 7개의 컨테이너 이름를 등록하였습니다.
+AWS ECR에서 빌드된 Docker 컨테이너를 푸시하기 전에, 다음의 화면처럼 컨테이너 리포지토리 이름을 등록합니다
+![alt text](tango_aws_ecr_new_repository.png)
+
+Tango 배포를 위해 AWS ECR에 7개의 컨테이너 이름를 등록하였습니다.
 * tango-autonn
 * tango-cloud_deploy
 * tango-code_gen
@@ -54,7 +57,24 @@ Docker compose 로 빌드된 컨테이너를, AWS ECR 컨테이너에 등록합�
 * tango-postgres
 * tango-project_manager
 
-이후 빌드 완료된 컨테이너에 대해서 태그를 붙입니다 
+빌드된 Tango 컨테이너를 AWS ECR에 다음의 이름으로 푸시할 것입니다.
+
+* tango-autonn  -> tango-autonn
+* tango-cloud_deploy -> tango-cloud_deploy
+* tango-code_gen -> tango-code_gen
+* tango-labelling -> tango-labelling
+* tango-ondevice_deploy -> tango-ondevice_deploy
+* postgres -> tango-postgres
+* tango-project_manager -> tango-project_manager
+
+이후, AWS ECR 푸시 하기 전에 AWS CLI에서 AWS ECR 푸시 명령대로 인증 토큰과 Docker 클라이언트 인증을 진행합니다 
+
+* AWS ECR 인증 토큰 생성 및 Docker 클라이언트 인증 (아래는 예시) 
+```shell
+ aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango
+```
+
+다음의 빌드된 TANGO 컨테이너 내용은 다음과 같습니다, 
 ```shell
 docker images
 REPOSITORY                                                         TAG       IMAGE ID       CREATED             SIZE
@@ -67,16 +87,8 @@ tango-ondevice_deploy                                              latest    c45
 postgres                                                           15.4      68a92c148701   15 months ago       411MB
 ```
 
-* tango-autonn  -> tango-autonn
-* tango-cloud_deploy -> tango-cloud_deploy
-* tango-code_gen -> tango-code_gen
-* tango-labelling -> tango-labelling
-* tango-ondevice_deploy -> tango-ondevice_deploy
-* postgres -> tango-postgres
-* tango-project_manager -> tango-project_manager
+생성한 AWS ECR 컨테이너를 푸시 하기 위해서, 생성한 Tango 컨테이너에 태그를 생성합니다.
 
-
-생성한 AWS ECR 컨테이너를 푸시 하기 위해서 태그를 생성합니다.
 * 태그 생성
   ```shell
   $ docker tag tango-autonn:latest  xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-autonn:latest
@@ -87,11 +99,7 @@ postgres                                                           15.4      68a
   $ docker tag postgres:15.4  xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-postgres:15.4
   $ docker tag tango-project_manager:latest  xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-project_manager:latest
   ```
-
-* AWS ECR 로그인
-```shell
- aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango
-```
+이후, AWS ECR에 태그를 붙인 컨테이너를 푸시합니다.
   
 * AWS ECR에 빌드한 Docker 컨테이너 푸시
   ```shell
