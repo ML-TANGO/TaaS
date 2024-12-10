@@ -1,0 +1,411 @@
+{
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "family": "TangoCluster",
+    "containerDefinitions": [
+        {
+            "name": "project_manager",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-project_manager:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "project_manager_port",
+                    "containerPort": 8085,
+                    "hostPort": 8085,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "entryPoint": [
+                "sh",
+                "-c",
+                "chmod 777 ./wait_for_postgres.sh && ./wait_for_postgres.sh && python manage.py migrate && python manage.py loaddata base_model_data.json && python manage.py runserver 0.0.0.0:8085"
+            ],
+            "environment": [
+                {
+                    "name": "POSTGRES_NAME",
+                    "value": "postgres"
+                },
+                {
+                    "name": "POSTGRES_USER",
+                    "value": "postgres"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "postgres"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "shared",
+                    "containerPath": "/shared",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "dependsOn": [
+                {
+                    "containerName": "postgresql",
+                    "condition": "HEALTHY"
+                }
+            ],
+            "dockerLabels": {
+                "service": "project_manager"
+            },
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        },
+        {
+            "name": "postgresql",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-postgres:15.4",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "postgresql-port",
+                    "containerPort": 5432,
+                    "hostPort": 5432,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "POSTGRES_NAME",
+                    "value": "postgres"
+                },
+                {
+                    "name": "POSTGRES_USER",
+                    "value": "postgres"
+                },
+                {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "postgres"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "postgreSQL",
+                    "containerPath": "/var/lib/postgresql/data",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "dockerLabels": {
+                "service": "postgresql"
+            },
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+			"healthCheck": {
+			      "command": [
+			          "CMD-SHELL",
+			          "pg_isready -U postgres"
+			      ],
+			      "interval": 30,
+			      "timeout": 5,
+			      "retries": 3,
+			      "startPeriod": 60
+			},
+            "systemControls": []
+        },
+        {
+            "name": "labelling",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-labelling:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "labelling-webui",
+                    "containerPort": 8086,
+                    "hostPort": 8086,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                },
+                {
+                    "name": "labelling-restapi",
+                    "containerPort": 8095,
+                    "hostPort": 8095,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "shared",
+                    "containerPath": "/shared",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        },
+        {
+            "name": "autonn",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-autonn:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "autonn-visualizer-port",
+                    "containerPort": 8100,
+                    "hostPort": 8100,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                },
+                {
+                    "name": "autonn-streamlit-port",
+                    "containerPort": 8101,
+                    "hostPort": 8101,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "entryPoint": [
+                "sh",
+                "-c",
+                "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8100"
+            ],
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "shared",
+                    "containerPath": "/shared",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        },
+        {
+            "name": "code_gen",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-code_gen:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "8888",
+                    "containerPort": 8888,
+                    "hostPort": 8888,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "entryPoint": [
+                "sh",
+                "-c",
+                "cd /app && python3 code_gen.py"
+            ],
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "shared",
+                    "containerPath": "/tango",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        },
+        {
+            "name": "cloud_deploy",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-cloud_deploy:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "cloud-deploy-image-builder-api",
+                    "containerPort": 7007,
+                    "hostPort": 7007,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                },
+                {
+                    "name": "cloud-deploy-image-builder-gui",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                },
+                {
+                    "name": "cloud-deploy-cloud-manager",
+                    "containerPort": 8890,
+                    "hostPort": 8890,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "GCP_PROJECT_ID",
+                    "value": "tango-project"
+                },
+                {
+                    "name": "GOOGLE_APPLICATION_CREDENTIALS",
+                    "value": "/source/cloud_manager/service-account-file.json"
+                },
+                {
+                    "name": "CLOUD_MANAGER_PORT",
+                    "value": "8088"
+                },
+                {
+                    "name": "GCP_REGION",
+                    "value": "asia-northeast3"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "shared",
+                    "containerPath": "/shared",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        },
+        {
+            "name": "ondevice_deploy",
+            "image": "xxxxxxxxxxxxxx.dkr.ecr.ap-northeast-2.amazonaws.com/tango-ondevice_deploy:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "ondevice-deploy-port",
+                    "containerPort": 8891,
+                    "hostPort": 8891,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "entryPoint": [
+                "sh",
+                "-c",
+                "cd /app && python3 ondevice_deploy.py"
+            ],
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [
+                {
+                    "sourceVolume": "shared",
+                    "containerPath": "/tango",
+                    "readOnly": false
+                }
+            ],
+            "volumesFrom": [],
+            "dockerLabels": {
+                "service": "ondevice_deploy"
+            },
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/logging_name",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "volumes": [
+        {
+            "name": "shared",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "fs-aaaaaaaaaaaaaaaa",
+                "rootDirectory": "/"
+            }
+        },
+        {
+            "name": "postgreSQL",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "fs-bbbbbbbbbbbbbbbb",
+                "rootDirectory": "/"
+            }
+        }
+    ],
+    "networkMode": "awsvpc",
+    "memory": "16 GB",
+    "cpu": "8 vCPU",
+    "executionRoleArn": "arn:aws:iam::xxxxxxxxxxxxxx:role/ecsTaskExecutionRole",
+    "ephemeralStorage": { "sizeInGiB": 200 }
+}
