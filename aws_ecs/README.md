@@ -1,6 +1,7 @@
 # TASS의 AWS ECS Fargate 실행 설정
 
-
+참고: AWS ECS 배포 방식 중, Fargate의 배포는 GPU를 지원하지 않기때문에
+Tango 배포시, GPU 사용하는 환경설정에 대해서 주석처리를 해야 돌아갑니다.
 
 ### TANGO Repository 다운로드 후 Docker 빌드
 
@@ -11,7 +12,7 @@ git clone https://github.com/ML-TANGO/TANGO.git
 
 
 AWS ECR 도커 등록 및 AWS ECS의 FARGATE에 배포하기전에, 소스코드 상의 hostname을 localhost 혹은 127.0.0.1로 바꿔야 합니다.
-그리고, host와 container의 port를 똑같이 맞춰야 합니다
+그리고, host와 container의 port를 똑같이 맞춰야 합니다.
 
 참고 링크: 
 [Task Networking in AWS Fargate](https://aws.amazon.com/ko/blogs/compute/task-networking-in-aws-fargate/)
@@ -29,6 +30,9 @@ AWS ECR 도커 등록 및 AWS ECS의 FARGATE에 배포하기전에, 소스코드
         "/static": "http://localhost:8095",
 ```
 
+상세한 변경 사항에 대한 diff는 다음의 [aws_ecs_fargate_mod_codes.diff](aws_ecs_fargate_mod_codes.diff) 내용을 참고하여 수정하면 됩니다.
+
+이후, 소스코드 수정이 완료가 되었으면 Docker compose로 빌드합니다.
 
 * Docker compose 빌드
 ```shell

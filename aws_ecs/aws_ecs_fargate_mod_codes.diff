@@ -1,0 +1,295 @@
+diff --git a/docker-compose.yml b/docker-compose.yml
+index c510833..c5ae797 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -95,17 +95,17 @@ services:
+       sh -c "python manage.py makemigrations &&
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8100"
+-    deploy:
+-      resources:
+-        reservations:
+-          devices:
+-            - driver: nvidia
+-              count: all
+-              capabilities:
+-                - gpu
+-                - utility
+-                - compute
+-                - video
++    #deploy:
++    #  resources:
++    #    reservations:
++    #      devices:
++    #        - driver: nvidia
++    #          count: all
++    #          capabilities:
++    #            - gpu
++    #            - utility
++    #            - compute
++    #            - video
+     environment:
+       - NVIDIA_VISIBLE_DEVICES=${GPU_NUM:-all}
+     volumes:
+diff --git a/labelling/Client/webpack/webpack.config.client.dev.js b/labelling/Client/webpack/webpack.config.client.dev.js
+index f062414..1b11cdb 100644
+--- a/labelling/Client/webpack/webpack.config.client.dev.js
++++ b/labelling/Client/webpack/webpack.config.client.dev.js
+@@ -243,9 +243,9 @@ module.exports = env => {
+         index: BASE_PATH
+       },
+       proxy: {
+-        "/api": { target: "http://localhost:10236", proxyTimeout: 5 * 60 * 1000, timeout: 5 * 60 * 1000 },
+-        "/qithum": "http://localhost:10236",
+-        "/static": "http://localhost:10236",
++        "/api": { target: "http://localhost:8095", proxyTimeout: 5 * 60 * 1000, timeout: 5 * 60 * 1000 },
++        "/qithum": "http://localhost:8095",
++        "/static": "http://localhost:8095",
+         "/socket.io": { target: "http://localhost:3000", ws: true }
+       },
+       // proxy: {
+diff --git a/labelling/Client/webpack/webpack.config.client.master.js b/labelling/Client/webpack/webpack.config.client.master.js
+index 1cf110c..c0621b0 100644
+--- a/labelling/Client/webpack/webpack.config.client.master.js
++++ b/labelling/Client/webpack/webpack.config.client.master.js
+@@ -240,9 +240,9 @@ module.exports = env => ({
+       index: BASE_PATH
+     },
+     proxy: {
+-      "/api": "http://0.0.0.0:10236",
+-      "/qithum": "http://0.0.0.0:10236",
+-      "/static": "http://0.0.0.0:10236",
++      "/api": "http://0.0.0.0:8095",
++      "/qithum": "http://0.0.0.0:8095",
++      "/static": "http://0.0.0.0:8095",
+       "/socket.io": { target: "http://0.0.0.0:3000", ws: true }
+     },
+     host: "0.0.0.0",
+diff --git a/labelling/Client/webpack/webpack.config.client.prod.js b/labelling/Client/webpack/webpack.config.client.prod.js
+index 1cf110c..c0621b0 100644
+--- a/labelling/Client/webpack/webpack.config.client.prod.js
++++ b/labelling/Client/webpack/webpack.config.client.prod.js
+@@ -240,9 +240,9 @@ module.exports = env => ({
+       index: BASE_PATH
+     },
+     proxy: {
+-      "/api": "http://0.0.0.0:10236",
+-      "/qithum": "http://0.0.0.0:10236",
+-      "/static": "http://0.0.0.0:10236",
++      "/api": "http://0.0.0.0:8095",
++      "/qithum": "http://0.0.0.0:8095",
++      "/static": "http://0.0.0.0:8095",
+       "/socket.io": { target: "http://0.0.0.0:3000", ws: true }
+     },
+     host: "0.0.0.0",
+diff --git a/labelling/Deployment/config/default.conf b/labelling/Deployment/config/default.conf
+index fd136c3..5f14a05 100644
+--- a/labelling/Deployment/config/default.conf
++++ b/labelling/Deployment/config/default.conf
+@@ -1,12 +1,12 @@
+ server {
+-    listen       80;
+-    listen  [::]:80;
++    listen       8086;
++    listen  [::]:8086;
+     server_name  0.0.0.0;
+ 
+     #charset koi8-r;
+ 
+     location /api {
+-        proxy_pass http://localhost:10236/api;
++        proxy_pass http://localhost:8095/api;
+         proxy_set_header X-Forwarded-Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+@@ -14,7 +14,7 @@ server {
+ 				proxy_read_timeout 3000;
+     }
+     # location /thum {
+-    #     proxy_pass http://localhost:10236/thum;
++    #     proxy_pass http://localhost:8095/thum;
+     #     proxy_set_header X-Forwarded-Host $host;
+     #     proxy_set_header X-Real-IP $remote_addr;
+     #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+@@ -22,7 +22,7 @@ server {
+ 		# 		#proxy_read_timeout 180;
+     # }
+     location /qithum {
+-        proxy_pass http://localhost:10236/qithum;
++        proxy_pass http://localhost:8095/qithum;
+         proxy_set_header X-Forwarded-Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+@@ -30,7 +30,7 @@ server {
+ 				#proxy_read_timeout 180;
+     }
+     location /static {
+-        proxy_pass http://localhost:10236/static;
++        proxy_pass http://localhost:8095/static;
+         proxy_set_header X-Forwarded-Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+diff --git a/labelling/Model/FeatureEngineering/FeatureEngineering.py b/labelling/Model/FeatureEngineering/FeatureEngineering.py
+index d160246..769a1a1 100644
+--- a/labelling/Model/FeatureEngineering/FeatureEngineering.py
++++ b/labelling/Model/FeatureEngineering/FeatureEngineering.py
+@@ -23,11 +23,11 @@ log = logger("log")
+ 
+ 
+ '''
+-input : {"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210055/iris.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210055","COLUMN_NM":"sepal width (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"sepal length (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"petal width (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"petal length (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":5,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":10236},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_EXTRACTION/PCA"}]}
++input : {"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210055/iris.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210055","COLUMN_NM":"sepal width (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"sepal length (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"petal width (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"petal length (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":5,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":8095},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_EXTRACTION/PCA"}]}
+ 
+ output : 
+-    1) FEATURE_SELECTION: {"COLUMN_INFO": [{"COLUMN_NAME": "petal width (cm)", "VALUE": "0.4177451410401348", "RANK": "1"}, {"COLUMN_NAME": "petal length (cm)", "VALUE": "0.3993730392727437", "RANK": "2"}], "SERVER_PARAM": {"AI_CD": "RT20210091", "AI_PATH": "/Users/upload/AiModel/RT20210091", "SRV_IP": "127.0.0.1", "SRV_PORT": 10236}, "MODEL_INFO": {"MODEL_NAME": "FEATURE_SELECTION", "MODEL_TYPE": "FE", "DATA_TYPE": "T", "FE_TYPE": "C", "THRESHOLD": 0.05, "COMPONENT_COUNT": 2}}
+-    2) FEATURE_EXTRACTION: {"COLUMN_INFO": [], "SERVER_PARAM": {"AI_CD": "RT20210091", "AI_PATH": "/Users/upload/AiModel/RT20210091", "SRV_IP": "127.0.0.1", "SRV_PORT": 10236}, "MODEL_INFO": {"MODEL_NAME": "PCA", "MODEL_TYPE": "FE", "DATA_TYPE": "T", "FE_TYPE": "R", "THRESHOLD": 0.95, "COMPONENT_COUNT": 2}}
++    1) FEATURE_SELECTION: {"COLUMN_INFO": [{"COLUMN_NAME": "petal width (cm)", "VALUE": "0.4177451410401348", "RANK": "1"}, {"COLUMN_NAME": "petal length (cm)", "VALUE": "0.3993730392727437", "RANK": "2"}], "SERVER_PARAM": {"AI_CD": "RT20210091", "AI_PATH": "/Users/upload/AiModel/RT20210091", "SRV_IP": "127.0.0.1", "SRV_PORT": 8095}, "MODEL_INFO": {"MODEL_NAME": "FEATURE_SELECTION", "MODEL_TYPE": "FE", "DATA_TYPE": "T", "FE_TYPE": "C", "THRESHOLD": 0.05, "COMPONENT_COUNT": 2}}
++    2) FEATURE_EXTRACTION: {"COLUMN_INFO": [], "SERVER_PARAM": {"AI_CD": "RT20210091", "AI_PATH": "/Users/upload/AiModel/RT20210091", "SRV_IP": "127.0.0.1", "SRV_PORT": 8095}, "MODEL_INFO": {"MODEL_NAME": "PCA", "MODEL_TYPE": "FE", "DATA_TYPE": "T", "FE_TYPE": "R", "THRESHOLD": 0.95, "COMPONENT_COUNT": 2}}
+ '''
+ 
+ # main
+@@ -43,14 +43,14 @@ if __name__ == "__main__":
+     # data= '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210055/iris.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210055","COLUMN_NM":"sepal length (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"sepal width (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"petal length (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"petal width (cm)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210055","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":5,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":10236},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_SELECTION"}]}'
+     
+     # dtr_pca
+-    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/RT210026/DTR_FINAL.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"Ks","MAPING_INFO":[{"DATASET_CD":"RT210026","COLUMN_NM":"Degas 1st CurrentCount","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MainPress SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"UpperHeatPlate1 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MoldingCountCurrentValue_PV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"LowerHeatPlate3 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_ML14(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t5_sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tmax(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t90_Sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Hard(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Elong(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tensile(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_ML14(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t5(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmin(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmax(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t10(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Hard(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_SG(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Elong(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tensile(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M100(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M300(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"Ks","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":10236},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_EXTRACTION/PCA"}]}'
++    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/RT210026/DTR_FINAL.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"Ks","MAPING_INFO":[{"DATASET_CD":"RT210026","COLUMN_NM":"Degas 1st CurrentCount","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MainPress SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"UpperHeatPlate1 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MoldingCountCurrentValue_PV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"LowerHeatPlate3 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_ML14(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t5_sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tmax(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t90_Sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Hard(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Elong(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tensile(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_ML14(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t5(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmin(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmax(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t10(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Hard(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_SG(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Elong(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tensile(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M100(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M300(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"Ks","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":8095},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_EXTRACTION/PCA"}]}'
+     # dtr_fs
+-    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/RT210026/DTR_FINAL.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"Ks","MAPING_INFO":[{"DATASET_CD":"RT210026","COLUMN_NM":"Degas 1st CurrentCount","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MainPress SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"UpperHeatPlate1 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MoldingCountCurrentValue_PV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"LowerHeatPlate3 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_ML14(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t5_sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tmax(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t90_Sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Hard(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Elong(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tensile(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_ML14(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t5(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmin(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmax(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t10(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Hard(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_SG(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Elong(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tensile(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M100(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M300(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"Ks","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":10236},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_SELECTION"}]}'
++    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/RT210026/DTR_FINAL.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"Ks","MAPING_INFO":[{"DATASET_CD":"RT210026","COLUMN_NM":"Degas 1st CurrentCount","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MainPress SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"UpperHeatPlate1 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"MoldingCountCurrentValue_PV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"LowerHeatPlate3 _Temp_SV","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_ML14(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t5_sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tmax(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_t90_Sec(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Hard(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Elong(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"C_Tensile(CMB)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_ML14(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t5(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmin(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tmax(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_t10(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Hard(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_SG(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Elong(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_Tensile(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M100(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"S_M300(SM)","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"RT210026","COLUMN_NM":"Ks","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":8095},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_SELECTION"}]}'
+     
+     # kdd_pca
+-    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210066/kddcup99_csv.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210066","COLUMN_NM":"duration","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"protocol_type","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"service","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"flag","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"src_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":5,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"land","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":6,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"wrong_fragment","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":7,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"urgent","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":8,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"hot","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":9,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"num_failed_logins","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":10,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"logged_in","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":11,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_compromised","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":12,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lroot_shell","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":13,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lsu_attempted","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":14,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_root","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":15,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_file_creations","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":16,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_shells","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":17,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_access_files","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":18,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_outbound_cmds","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":19,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_host_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":20,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_guest_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":21,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":22,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":23,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":24,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":25,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":26,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":27,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":28,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":29,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":30,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":31,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":32,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":33,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":34,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_src_port_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":35,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":36,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":37,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":38,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":39,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":40,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":41,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":10236},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_EXTRACTION/PCA"}]}'
++    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210066/kddcup99_csv.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210066","COLUMN_NM":"duration","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"protocol_type","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"service","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"flag","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"src_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":5,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"land","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":6,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"wrong_fragment","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":7,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"urgent","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":8,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"hot","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":9,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"num_failed_logins","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":10,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"logged_in","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":11,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_compromised","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":12,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lroot_shell","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":13,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lsu_attempted","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":14,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_root","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":15,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_file_creations","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":16,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_shells","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":17,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_access_files","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":18,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_outbound_cmds","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":19,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_host_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":20,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_guest_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":21,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":22,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":23,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":24,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":25,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":26,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":27,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":28,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":29,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":30,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":31,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":32,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":33,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":34,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_src_port_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":35,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":36,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":37,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":38,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":39,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":40,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":41,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":8095},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"R","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_EXTRACTION/PCA"}]}'
+     # kdd_fs
+-    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210066/kddcup99_csv.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210066","COLUMN_NM":"duration","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"protocol_type","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"service","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"flag","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"src_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":5,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"land","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":6,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"wrong_fragment","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":7,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"urgent","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":8,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"hot","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":9,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"num_failed_logins","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":10,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"logged_in","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":11,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_compromised","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":12,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lroot_shell","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":13,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lsu_attempted","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":14,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_root","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":15,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_file_creations","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":16,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_shells","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":17,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_access_files","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":18,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_outbound_cmds","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":19,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_host_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":20,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_guest_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":21,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":22,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":23,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":24,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":25,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":26,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":27,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":28,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":29,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":30,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":31,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":32,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":33,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":34,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_src_port_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":35,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":36,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":37,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":38,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":39,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":40,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":41,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":10236},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"C","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_SELECTION"}]}'
++    # data = '{"INPUT_DATA":{"TRAIN_PATH":[{"FILE_PATH":"/Users/upload/DataSets/CT210066/kddcup99_csv.csv"}],"DELIMITER":",","SPLIT_YN":"Y","DATASET_SPLIT":25,"TEST_DATASET_CD":null,"TEST_PATH":null,"LABEL_COLUMN_NAME":"label","MAPING_INFO":[{"DATASET_CD":"CT210066","COLUMN_NM":"duration","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":0,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"protocol_type","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":1,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"service","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":2,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"flag","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":3,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"src_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":4,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_bytes","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":5,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"land","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":6,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"wrong_fragment","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":7,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"urgent","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":8,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"hot","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":9,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"num_failed_logins","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":10,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"logged_in","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":11,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_compromised","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":12,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lroot_shell","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":13,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lsu_attempted","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":14,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_root","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":15,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_file_creations","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":16,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_shells","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":17,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_access_files","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":18,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"lnum_outbound_cmds","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":19,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_host_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":20,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"is_guest_login","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":21,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":22,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":23,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":24,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":25,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":26,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":27,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":28,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":29,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":30,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":31,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_count","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":32,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":33,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_diff_srv_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":34,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_same_src_port_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":35,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_diff_host_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":36,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":37,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_serror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":38,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":39,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"dst_host_srv_rerror_rate","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":0,"COLUMN_IDX":40,"checked":1},{"DATASET_CD":"CT210066","COLUMN_NM":"label","COLUMN_ALIAS":null,"DEFAULT_VALUE":null,"IS_CLASS":1,"COLUMN_IDX":41,"checked":1}]},"SERVER_PARAM":{"AI_CD":"RT20210091","AI_PATH":"/Users/upload/AiModel/RT20210091","SRV_IP":"127.0.0.1","SRV_PORT":8095},"MODEL_INFO":[{"DATA_TYPE":"T","OBJECT_TYPE":"F","FE_TYPE":"C","MODEL_NAME":"FEATURE_SELECTION","MODEL_TYPE":"FE","MDL_ALIAS":"FEATURE_SELECTION_0","MDL_IDX":0,"MDL_PATH":"Network/Tabular/FEATURE_ENGINEERING/FEATURE_SELECTION"}]}'
+ 
+     # param = json.loads(data)
+     param = json.loads(sys.argv[1])    
+diff --git a/labelling/Model/Jetson/settings/39/setting_39.json b/labelling/Model/Jetson/settings/39/setting_39.json
+index 02fff0d..8ccc24c 100644
+--- a/labelling/Model/Jetson/settings/39/setting_39.json
++++ b/labelling/Model/Jetson/settings/39/setting_39.json
+@@ -1 +1 @@
+-{"HW_TYPE": "B", "CAM_SERIAL": "23123744", "SRV_IP": "0.0.0.0", "SRV_PORT": "10236", "HW_CD": "39", "MDL_PATH": null}
+\ No newline at end of file
++{"HW_TYPE": "B", "CAM_SERIAL": "23123744", "SRV_IP": "0.0.0.0", "SRV_PORT": "8095", "HW_CD": "39", "MDL_PATH": null}
+diff --git a/labelling/Model/Jetson/settings/46/setting_46.json b/labelling/Model/Jetson/settings/46/setting_46.json
+index 513c7ad..74aa1ba 100644
+--- a/labelling/Model/Jetson/settings/46/setting_46.json
++++ b/labelling/Model/Jetson/settings/46/setting_46.json
+@@ -1 +1 @@
+-{"HW_TYPE": "B", "CAM_SERIAL": "23123744", "SRV_IP": "0.0.0.0", "SRV_PORT": "10236", "HW_CD": "46", "MDL_PATH": null}
+\ No newline at end of file
++{"HW_TYPE": "B", "CAM_SERIAL": "23123744", "SRV_IP": "0.0.0.0", "SRV_PORT": "8095", "HW_CD": "46", "MDL_PATH": null}
+diff --git a/labelling/Model/Service/service.py b/labelling/Model/Service/service.py
+index c056157..5a00d3c 100644
+--- a/labelling/Model/Service/service.py
++++ b/labelling/Model/Service/service.py
+@@ -52,7 +52,7 @@ api = Api(app)
+     {
+       "AI_CD": 111111,
+       "SRV_IP": "0.0.0.0",
+-      "SRV_PORT": 10236,
++      "SRV_PORT": 8095,
+       "PREDICT_RESULT_URL": "/tab/aaaaa"
+     }
+ }
+diff --git a/labelling/Server/package.json b/labelling/Server/package.json
+index c3a6a08..e242802 100644
+--- a/labelling/Server/package.json
++++ b/labelling/Server/package.json
+@@ -15,7 +15,7 @@
+ 	},
+ 	"nodemonConfig": {
+ 		"events": {
+-			"crash": "sh -c 'lsof -i :${PORT:-10236} -t | xargs kill'"
++			"crash": "sh -c 'lsof -i :${PORT:-8095} -t | xargs kill'"
+ 		}
+ 	},
+ 	"dependencies": {
+diff --git a/labelling/Server/src/config/devServer.json b/labelling/Server/src/config/devServer.json
+index b56f22e..ba17b5c 100644
+--- a/labelling/Server/src/config/devServer.json
++++ b/labelling/Server/src/config/devServer.json
+@@ -24,7 +24,7 @@
+ 		"save": "true",
+ 		"dirPath": "/Users/jogoon/weda/ETRI/bluailogs"
+ 	},
+-	"port": 10236,
++	"port": 8095,
+ 	"ip": "127.0.0.1",
+ 	"masterIp": "0.0.0.0",
+ 	"soc_port": 3000,
+diff --git a/labelling/Server/src/config/server-release.json b/labelling/Server/src/config/server-release.json
+index 6795b7d..8957407 100644
+--- a/labelling/Server/src/config/server-release.json
++++ b/labelling/Server/src/config/server-release.json
+@@ -24,7 +24,7 @@
+ 		"save": "true",
+ 		"dirPath": "/var/appdata/Logs"
+ 	},
+-	"port": 10236,
++	"port": 8095,
+ 	"ip": "localhost",
+ 	"masterIp": "0.0.0.0",
+ 	"soc_port": 3000,
+diff --git a/labelling/Server/src/routes/DataSetController.js b/labelling/Server/src/routes/DataSetController.js
+index d90fd2a..f104c79 100644
+--- a/labelling/Server/src/routes/DataSetController.js
++++ b/labelling/Server/src/routes/DataSetController.js
+@@ -316,7 +316,7 @@ const _removeDataSet = async (data) => {
+ 
+ router.post("/testtest", async (req, res, next) => {
+ 	try {
+-		let resResult = await CF.sendGetRequest("0.0.0.0", "10236", "/test", {
++		let resResult = await CF.sendGetRequest("0.0.0.0", "8095", "/test", {
+ 			project_id: "testtest",
+ 			user_id: "dkdkdkfekjfj",
+ 		})
+diff --git a/labelling/Server/src/routes/Tab/TabAiProjectController.js b/labelling/Server/src/routes/Tab/TabAiProjectController.js
+index ba20324..43ba1f6 100644
+--- a/labelling/Server/src/routes/Tab/TabAiProjectController.js
++++ b/labelling/Server/src/routes/Tab/TabAiProjectController.js
+@@ -184,7 +184,7 @@ router.post("/starttrain", async (req, res, next) => {
+       AI_CD: param.AI_CD,
+       AI_PATH: path.join(config.aiPath, param.AI_CD),
+       SRV_IP: "127.0.0.1", /// 서버 변경
+-      SRV_PORT: 10236,
++      SRV_PORT: 8095,
+       TRAIN_RESULT_URL: "/tab/binary/trainResultLog",
+       TRAIN_STATE_URL: "/tab/binary/binaryStatusLog",
+       TRAINING_INFO_URL: "/tab/binary/trainInfoLog"
+diff --git a/project_manager/backend/settings.py b/project_manager/backend/settings.py
+index 51b1ad1..d8ceeee 100755
+--- a/project_manager/backend/settings.py
++++ b/project_manager/backend/settings.py
+@@ -115,7 +115,7 @@ DATABASES = {
+         'NAME': os.environ.get('POSTGRES_NAME'),
+         'USER': os.environ.get('POSTGRES_USER'),
+         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+-        'HOST': 'postgresql',
++        'HOST': 'localhost',
+         'PORT': '5432',
+     }
+ }
+@@ -235,4 +235,4 @@ STATIC_ROOT = os.path.join(BASE_DIR.parent, 'frontend', 'build', 'static')
+ # Default primary key field type
+ # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+ 
+-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+\ No newline at end of file
++DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+diff --git a/project_manager/wait_for_postgres.sh b/project_manager/wait_for_postgres.sh
+index 968db7d..cbfbef1 100755
+--- a/project_manager/wait_for_postgres.sh
++++ b/project_manager/wait_for_postgres.sh
+@@ -1,6 +1,6 @@
+ #!/bin/bash
+ 
+-dockerize -wait tcp://postgresql:5432 -timeout 20s
++dockerize -wait tcp://localhost:5432 -timeout 20s
+ 
+ # Apply database migrations
+ echo "Apply database migrations"
